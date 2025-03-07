@@ -1,1 +1,1 @@
-# online-chat
+# Spring boot chat application
