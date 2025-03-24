@@ -34,14 +34,29 @@ function connect(event) {
 function onConnected() {
     stompClient.subscribe(`/user/${nickname}/queue/messages`, onMessageReceived); // for private messages
     stompClient.subscribe(`/user/public`, onMessageReceived); // for group messages
+    stompClient.subscribe(`/topic/onlineUsers`, onActiveUsers);
+
+    stompClient.send("/app/onlineUser",
+                {},
+                JSON.stringify({nickName: nickname, fullName: fullname})
+            );
+
+
 
     // register the connected user
-    stompClient.send("/app/user.addUser",
-        {},
-        JSON.stringify({nickName: nickname, fullName: fullname, status: 'ONLINE'})
-    );
+//    stompClient.send("/app/user/addUser",
+//        {},
+//        JSON.stringify({nickName: nickname, fullName: fullname, status: 'ONLINE'})
+//    );
+
+
     document.querySelector('#connected-user-fullname').textContent = fullname;
     findAndDisplayConnectedUsers().then();
+}
+
+async function onActiveUsers(payload){
+    console.log("Connected to active users websocket");
+    console.log("payload from onActiveUser: ", payload.body);
 }
 
 async function findAndDisplayConnectedUsers() {
@@ -177,10 +192,15 @@ async function onMessageReceived(payload) {
 }
 
 function onLogout() {
-    stompClient.send("/app/user.disconnectUser",
+    stompClient.send("/app/user/disconnectUser",
         {},
         JSON.stringify({nickName: nickname, fullName: fullname, status: 'OFFLINE'})
     );
+
+    stompClient.send("/app/offlineUser",
+            {},
+            JSON.stringify({nickName: nickname, fullName: fullname, status: 'OFFLINE'})
+        );
     window.location.reload();
 }
 
