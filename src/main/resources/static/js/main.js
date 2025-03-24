@@ -13,6 +13,7 @@ let stompClient = null;
 let nickname = null;
 let fullname = null;
 let selectedUserId = null;
+let onlineUsers = new Set(); // Keep track of online users
 
 function connect(event) {
     nickname = document.querySelector('#nickname').value.trim();
@@ -30,10 +31,9 @@ function connect(event) {
     event.preventDefault();
 }
 
-
 function onConnected() {
-    stompClient.subscribe(`/user/${nickname}/queue/messages`, onMessageReceived); // for private messages
-    stompClient.subscribe(`/user/public`, onMessageReceived); // for group messages
+    stompClient.subscribe(`/user/${nickname}/queue/messages`, onMessageReceived);
+    stompClient.subscribe(`/user/public`, onMessageReceived);
     stompClient.subscribe(`/topic/onlineUsers`, onActiveUsers);
 
     stompClient.send("/app/onlineUser",
@@ -43,22 +43,26 @@ function onConnected() {
 
 
 
-    // register the connected user
-//    stompClient.send("/app/user/addUser",
-//        {},
-//        JSON.stringify({nickName: nickname, fullName: fullname, status: 'ONLINE'})
-//    );
+     //register the connected user
+    stompClient.send("/app/user/addUser",
+        {},
+        JSON.stringify({nickName: nickname, fullName: fullname, status: 'ONLINE'})
+    );
 
 
     document.querySelector('#connected-user-fullname').textContent = fullname;
     findAndDisplayConnectedUsers().then();
 }
 
-async function onActiveUsers(payload){
+async function onActiveUsers(payload) {
     console.log("Connected to active users websocket");
-    console.log("payload from onActiveUser: ", payload.body);
-}
+    console.log("Payload from onActiveUsers:", payload.body);
 
+    onlineUsers = new Set(JSON.parse(payload.body));
+
+    await findAndDisplayConnectedUsers(); // Ensure users are in the DOM first
+    updateUserStatus();
+}
 async function findAndDisplayConnectedUsers() {
     const connectedUsersResponse = await fetch('/users');
     let connectedUsers = await connectedUsersResponse.json();
@@ -74,6 +78,8 @@ async function findAndDisplayConnectedUsers() {
             connectedUsersList.appendChild(separator);
         }
     });
+
+    updateUserStatus();
 }
 
 function appendUserElement(user, connectedUsersList) {
@@ -88,18 +94,41 @@ function appendUserElement(user, connectedUsersList) {
     const usernameSpan = document.createElement('span');
     usernameSpan.textContent = user.fullName;
 
-    const receivedMsgs = document.createElement('span');
-    receivedMsgs.textContent = '0';
-    receivedMsgs.classList.add('nbr-msg', 'hidden');
+    const statusIndicator = document.createElement('span');
+    statusIndicator.classList.add('status-indicator'); // Add the status dot
 
     listItem.appendChild(userImage);
     listItem.appendChild(usernameSpan);
-    listItem.appendChild(receivedMsgs);
+    listItem.appendChild(statusIndicator);
 
     listItem.addEventListener('click', userItemClick);
 
     connectedUsersList.appendChild(listItem);
 }
+
+
+function updateUserStatus() {
+    const userElements = document.querySelectorAll('.user-item');
+    userElements.forEach(userElement => {
+        const userId = userElement.id;
+        let statusIndicator = userElement.querySelector('.status-indicator');
+
+        if (!statusIndicator) {
+            statusIndicator = document.createElement('span');
+            statusIndicator.classList.add('status-indicator');
+            userElement.appendChild(statusIndicator);
+        }
+
+        if (onlineUsers.has(userId)) {
+            statusIndicator.classList.add('online');
+            statusIndicator.classList.remove('offline');
+        } else {
+            statusIndicator.classList.add('offline');
+            statusIndicator.classList.remove('online');
+        }
+    });
+}
+
 
 function userItemClick(event) {
     document.querySelectorAll('.user-item').forEach(item => {
@@ -143,12 +172,10 @@ async function fetchAndDisplayUserChat() {
     chatArea.scrollTop = chatArea.scrollHeight;
 }
 
-
 function onError() {
     connectingElement.textContent = 'Could not connect to WebSocket server. Please refresh this page to try again!';
     connectingElement.style.color = 'red';
 }
-
 
 function sendMessage(event) {
     const messageContent = messageInput.value.trim();
@@ -204,7 +231,7 @@ function onLogout() {
     window.location.reload();
 }
 
-usernameForm.addEventListener('submit', connect, true); // step 1
+usernameForm.addEventListener('submit', connect, true);
 messageForm.addEventListener('submit', sendMessage, true);
 logout.addEventListener('click', onLogout, true);
 window.onbeforeunload = () => onLogout();
