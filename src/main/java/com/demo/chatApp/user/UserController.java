@@ -12,15 +12,13 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Controller
@@ -88,6 +86,13 @@ public class UserController {
             System.err.println("❌ Failed to process user login: " + e.getMessage());
             return onlineUsers; // Ensure return even in case of failure
         }
+    }
+
+    @MessageMapping("/typingStatus")
+    public void sendTypingStatus(@Payload Map<String, String> typingMessage) {
+        String sender = typingMessage.get("sender"); // Get username from the payload
+        String recipient = typingMessage.get("recipientId");
+        messagingTemplate.convertAndSendToUser(recipient, "/queue/typing", typingMessage);
     }
 
     @MessageMapping("/offlineUser")

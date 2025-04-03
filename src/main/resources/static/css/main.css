@@ -220,8 +220,14 @@ a.logout {
     background-color: red; /* Red for offline users */
 }
 
+.typing-indicator {
+    color: gray;
+    font-style: italic;
+}
+
 /* Styles for user list */
 .users-list-container ul {
     list-style-type: none;
     padding: 0
 
+}

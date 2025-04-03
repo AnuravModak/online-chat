@@ -33,6 +33,7 @@ function connect(event) {
 
 function onConnected() {
     stompClient.subscribe(`/user/${nickname}/queue/messages`, onMessageReceived);
+    stompClient.subscribe(`/user/${nickname}/queue/typing`, onMessageReceived);
     stompClient.subscribe(`/user/public`, onMessageReceived);
     stompClient.subscribe(`/topic/onlineUsers`, onActiveUsers);
 
@@ -42,6 +43,7 @@ function onConnected() {
             );
 
 
+    console.log("Sent message to '/app/typingStatus' ");
 
      //register the connected user
     stompClient.send("/app/user/addUser",
@@ -49,9 +51,28 @@ function onConnected() {
         JSON.stringify({nickName: nickname, fullName: fullname, status: 'ONLINE'})
     );
 
-
     document.querySelector('#connected-user-fullname').textContent = fullname;
     findAndDisplayConnectedUsers().then();
+}
+
+function sendTyping() {
+    if (stompClient && selectedUserId) {
+        const typingMessage = {
+            sender: nickname,
+            recipientId: selectedUserId,
+            typing: true
+        };
+
+        stompClient.send("/app/typingStatus", {}, JSON.stringify(typingMessage));
+
+        clearTimeout(typingIndicator);
+        typingIndicator = setTimeout(() => {
+            const typingDiv = document.getElementById("typing");
+            if (typingDiv) {
+                typingDiv.textContent = "";
+            }
+        }, 1000);
+    }
 }
 
 async function onActiveUsers(payload) {
@@ -194,29 +215,80 @@ function sendMessage(event) {
     event.preventDefault();
 }
 
-
 async function onMessageReceived(payload) {
     await findAndDisplayConnectedUsers();
     console.log('Message received', payload);
     const message = JSON.parse(payload.body);
-    if (selectedUserId && selectedUserId === message.senderId) {
-        displayMessage(message.senderId, message.content);
-        chatArea.scrollTop = chatArea.scrollHeight;
+
+    // Handle typing notifications
+    if (message.typing && message.sender !== nickname) {
+        // Display "typing..." in the user list
+        const userListItem = document.getElementById(message.sender);
+        if (userListItem) {
+            const typingIndicator = userListItem.querySelector('.typing-indicator');
+            if (!typingIndicator) {
+                const newTypingIndicator = document.createElement('span');
+                newTypingIndicator.classList.add('typing-indicator');
+                newTypingIndicator.textContent = " is typing...";
+                userListItem.appendChild(newTypingIndicator);
+            } else {
+                typingIndicator.textContent = " is typing...";
+            }
+
+            clearTimeout(userListItem.typingTimeout);
+            userListItem.typingTimeout = setTimeout(() => {
+                const typingIndicator = userListItem.querySelector('.typing-indicator');
+                if (typingIndicator) {
+                    typingIndicator.remove();
+                }
+            }, 1000);
+        }
+
+        // Display "typing..." in the main chat area (if selected)
+        if (selectedUserId === message.sender) {
+            const typingDiv = document.getElementById("typing");
+            if (typingDiv) {
+                typingDiv.textContent = message.sender + " is typing...";
+                clearTimeout(typingIndicator);
+                typingIndicator = setTimeout(() => {
+                    typingDiv.textContent = "";
+                }, 1000);
+            }
+        }
     }
 
+    // Handle chat messages (non-typing)
+    if (!message.typing) {
+        if (selectedUserId && selectedUserId === message.senderId) {
+            // Display message in chat area
+            displayMessage(message.senderId, message.content);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        } else {
+            // Display notification dot if not in the same chat
+            const notifiedUser = document.querySelector(`#${message.senderId}`);
+            if (notifiedUser && !notifiedUser.classList.contains('active')) {
+                const nbrMsg = notifiedUser.querySelector('.nbr-msg');
+                if (!nbrMsg) {
+                    const newNbrMsg = document.createElement('span');
+                    newNbrMsg.classList.add('nbr-msg');
+                    newNbrMsg.textContent = '';
+                    notifiedUser.appendChild(newNbrMsg);
+                } else {
+                    nbrMsg.classList.remove('hidden');
+                    nbrMsg.textContent = '';
+                }
+            }
+        }
+    }
+
+    // Update active user status
     if (selectedUserId) {
         document.querySelector(`#${selectedUserId}`).classList.add('active');
     } else {
         messageForm.classList.add('hidden');
     }
-
-    const notifiedUser = document.querySelector(`#${message.senderId}`);
-    if (notifiedUser && !notifiedUser.classList.contains('active')) {
-        const nbrMsg = notifiedUser.querySelector('.nbr-msg');
-        nbrMsg.classList.remove('hidden');
-        nbrMsg.textContent = '';
-    }
 }
+
 
 function onLogout() {
     stompClient.send("/app/user/disconnectUser",
@@ -231,7 +303,16 @@ function onLogout() {
     window.location.reload();
 }
 
+
+
 usernameForm.addEventListener('submit', connect, true);
 messageForm.addEventListener('submit', sendMessage, true);
 logout.addEventListener('click', onLogout, true);
+//Add the typing div to the chat area.
+chatArea.insertAdjacentHTML('afterend', '<div id="typing"></div>');
+
+let typingIndicator;
+
+//Add the oninput event to the message input.
+messageInput.addEventListener('input', sendTyping);
 window.onbeforeunload = () => onLogout();
