@@ -8,7 +8,7 @@
 </head>
 <body>
 
-<h2>One to One Chat | Spring boot & Websocket | By Alibou</h2>
+<h2>One to One Chat | Spring Boot & WebSocket</h2>
 
 <div class="user-form" id="username-page">
     <h2>Enter Chatroom</h2>
@@ -26,7 +26,7 @@
 <div class="chat-container hidden" id="chat-page">
     <div class="users-list">
         <div class="users-list-container">
-            <h2>Online Users</h2>
+            <h2>Users</h2>
             <ul id="connectedUsers">
             </ul>
         </div>
@@ -39,7 +39,7 @@
     <div class="chat-area">
         <div class="chat-area" id="chat-messages">
         </div>
-
+        <div id="typing"></div>
         <form id="messageForm" name="messageForm" class="hidden">
             <div class="message-input">
                 <input autocomplete="off" type="text" id="message" placeholder="Type your message...">
