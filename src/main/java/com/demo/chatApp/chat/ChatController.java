@@ -1,7 +1,7 @@
 package com.demo.chatApp.chat;
 
 
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import java.util.List;
 
 @Controller
-@RequiredArgsConstructor
 public class ChatController {
 
     private SimpMessagingTemplate messagingTemplate;

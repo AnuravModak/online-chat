@@ -12,6 +12,7 @@ public class AppUser {
     private String nickName;
     private String fullName;
     private Status status;
+    private long keyId;
 
     public AppUser() {
         this.id = UUID.randomUUID().toString();
@@ -22,6 +23,7 @@ public class AppUser {
         this.nickName = nickName;
         this.fullName = fullName;
         this.status = status;
+
     }
 
     public AppUser(String id, String nickName, String fullName, Status status) {
