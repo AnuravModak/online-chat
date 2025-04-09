@@ -15,6 +15,7 @@ let fullname = null;
 let selectedUserId = null;
 let onlineUsers = new Set(); // Keep track of online users
 
+
 function connect(event) {
     nickname = document.querySelector('#nickname').value.trim();
     fullname = document.querySelector('#fullname').value.trim();
