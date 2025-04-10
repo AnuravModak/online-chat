@@ -13,31 +13,39 @@ public class ChatMessage {
     private String id;
 
     private String chatId;
+
+    @Column(length = 2048)
     private String senderId;
+    @Column(length = 2048)
     private String recipientId;
+    @Column(length = 2048)
     private String content;
     private Date timestamp;
+
+    private long keyId;
 
     public ChatMessage() {
         this.id = UUID.randomUUID().toString();
     }
 
-    public ChatMessage( String chatId, String senderId, String recipientId, String content, Date timestamp) {
+    public ChatMessage( String chatId, String senderId, String recipientId, String content, Date timestamp, long keyId) {
         this.id = UUID.randomUUID().toString();
         this.chatId = chatId;
         this.senderId = senderId;
         this.recipientId = recipientId;
         this.content = content;
         this.timestamp = timestamp;
+        this.keyId=keyId;
     }
 
-    public ChatMessage(String id, String chatId, String senderId, String recipientId, String content, Date timestamp) {
+    public ChatMessage(String id, String chatId, String senderId, String recipientId, String content, Date timestamp, long keyId) {
         this.id = id;
         this.chatId = chatId;
         this.senderId = senderId;
         this.recipientId = recipientId;
         this.content = content;
         this.timestamp = timestamp;
+        this.keyId=keyId;
     }
 
     public String getId() {
@@ -86,5 +94,13 @@ public class ChatMessage {
 
     public void setTimestamp(Date timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public long getKeyId() {
+        return keyId;
+    }
+
+    public void setKeyId(long keyId) {
+        this.keyId = keyId;
     }
 }

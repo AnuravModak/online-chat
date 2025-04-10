@@ -12,8 +12,13 @@ public class KeyEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
+
+    @Column(length = 2048)
     private String publicKey;
+
+    @Column(length = 4096)
     private String privateKey;
+
     private boolean active;
     private LocalDateTime createdAt;
     private LocalDateTime expiresAt;

@@ -1,10 +1,7 @@
 package com.demo.chatApp.chatroom;
 
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 import java.util.UUID;
 
@@ -13,8 +10,14 @@ public class ChatRoom {
 
     @Id
     private String id;
+
+    @Column(length = 2048)
     private String chatId;
+
+    @Column(length = 2048)
     private String senderId;
+
+    @Column(length = 2048)
     private String recipientId;
 
     public ChatRoom() {

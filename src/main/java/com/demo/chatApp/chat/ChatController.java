@@ -11,6 +11,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
+import javax.crypto.Cipher;
+import java.nio.charset.StandardCharsets;
+import java.security.KeyFactory;
+import java.security.PublicKey;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 import java.util.List;
 
 @Controller
@@ -24,6 +30,7 @@ public class ChatController {
         this.messagingTemplate=messagingTemplate;
         this.chatMessageService=chatMessageService;
     }
+
 
     @MessageMapping("/chat")
     public void processMessage(@Payload ChatMessage chatMessage) {

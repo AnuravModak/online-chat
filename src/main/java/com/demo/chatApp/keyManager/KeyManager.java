@@ -1,6 +1,7 @@
 package com.demo.chatApp.keyManager;
 
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -20,27 +21,33 @@ public class KeyManager {
         this.keyRepository=keyRepository;
     }
 
+//    @PostConstruct
+//    public void init() {
+//        generateKeyPair();
+//    }
+
 
     public KeyPair generateKeyPair() {
         try {
             // 1. Generate new key pair
             KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
             generator.initialize(2048);
-            KeyPair newKeyPair = generator.generateKeyPair();
+            this.keyPair  = generator.generateKeyPair();
 
             // 2. Expire old active key (if exists)
             Long existingKeyId = keyRepository.findActiveKeyId();
 
             if (existingKeyId != null) {
+                System.out.println("Inside null key id "+ existingKeyId);
                 keyRepository.expireKeyById(existingKeyId);
             }
 
             // 3. Convert keys to Base64 strings for storing in DB
-            String publicKeyStr = Base64.getEncoder().encodeToString(newKeyPair.getPublic().getEncoded());
-            String privateKeyStr = Base64.getEncoder().encodeToString(newKeyPair.getPrivate().getEncoded());
+            String publicKeyStr = Base64.getEncoder().encodeToString(this.keyPair .getPublic().getEncoded());
+            String privateKeyStr = Base64.getEncoder().encodeToString(this.keyPair .getPrivate().getEncoded());
 
             KeyEntity newKeyEntity = new KeyEntity();
-            newKeyEntity.setId(System.currentTimeMillis());
+//            newKeyEntity.setId(System.currentTimeMillis());
             newKeyEntity.setPublicKey(publicKeyStr);
             newKeyEntity.setPrivateKey(privateKeyStr);
             newKeyEntity.setActive(true);
@@ -49,7 +56,7 @@ public class KeyManager {
 
             keyRepository.save(newKeyEntity);
 
-            return newKeyPair;
+            return this.keyPair ;
 
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);

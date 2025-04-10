@@ -9,7 +9,11 @@ import java.util.UUID;
 public class AppUser {
     @Id
     private String id;
+
+    @Column(length = 2048)
     private String nickName;
+
+    @Column(length = 2048)
     private String fullName;
     private Status status;
     private long keyId;
@@ -18,11 +22,12 @@ public class AppUser {
         this.id = UUID.randomUUID().toString();
     }
 
-    public AppUser(String nickName, String fullName, Status status) {
+    public AppUser(String nickName, String fullName, Status status, long keyId) {
         this.id = UUID.randomUUID().toString();
         this.nickName = nickName;
         this.fullName = fullName;
         this.status = status;
+        this.keyId = keyId;
 
     }
 
@@ -63,5 +68,13 @@ public class AppUser {
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    public long getKeyId() {
+        return keyId;
+    }
+
+    public void setKeyId(long keyId) {
+        this.keyId = keyId;
     }
 }

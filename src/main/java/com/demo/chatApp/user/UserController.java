@@ -1,6 +1,8 @@
 package com.demo.chatApp.user;
 
 
+import com.demo.chatApp.keyManager.Encryption;
+import com.demo.chatApp.keyManager.KeyRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -17,29 +19,66 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import javax.crypto.Cipher;
+import java.nio.charset.StandardCharsets;
+import java.security.KeyFactory;
+import java.security.PublicKey;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Controller
 public class UserController {
     private UserService userService;
+    private Encryption encryption;
     private final SimpMessagingTemplate messagingTemplate;
+    private final KeyRepository keyRepository;
     private final Set<String> onlineUsers = ConcurrentHashMap.newKeySet();
 
     @Autowired
-    public UserController(UserService userService, SimpMessagingTemplate messagingTemplate){
+    public UserController(UserService userService, SimpMessagingTemplate messagingTemplate, KeyRepository keyRepository){
         this.userService=userService;
         this.messagingTemplate=messagingTemplate;
+        this.keyRepository=keyRepository;
     }
 
+    private AppUser encryptUserData(AppUser user) {
+        try {
+            Long keyId = keyRepository.findActiveKeyId();
+            if (keyId == null) {
+                throw new RuntimeException("Failed to save new user as key Id is null");
+            }
+
+            user.setKeyId(keyId);
+//            String publicKeyPem = keyRepository.findActivePublicKey(keyId);
+//            String privateKeyPem = keyRepository.findActivePrivateKey(keyId); // may not be needed now
+//
+//            // Convert PEM string to PublicKey
+//            PublicKey publicKey = encryption.getPublicKeyFromString(publicKeyPem);
+//
+//            // Encrypt user fields
+//            String encryptedFullName = encryption.encryptWithPublicKey(user.getFullName(), publicKey);
+//            String encryptedNickName = encryption.encryptWithPublicKey(user.getNickName(), publicKey);
+//
+//            // Set encrypted data
+//            user.setFullName(encryptedFullName);
+//            user.setNickName(encryptedNickName);
+
+            return user;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to encrypt user data", e);
+        }
+    }
 
     @MessageMapping("/user/addUser")
     @SendTo("/user/public")
     public AppUser addUser(
             @Payload AppUser user
     ) {
-        userService.saveUser(user);
-        return user;
+
+            AppUser encryptedUser= encryptUserData(user);
+            userService.saveUser(encryptedUser);
+            return encryptedUser;
     }
 
     @MessageMapping("/user/disconnectUser")
